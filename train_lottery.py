@@ -69,10 +69,18 @@ class LotteryPredict:
         torch.save({'state_dict': self.model.state_dict()}, args.save_file)
         print('第%d epoch，保存模型' % i)
     # torch.save(model, args.save_file)
-    torch.save({'state_dict': self.model.state_dict()}, args.save_file)'''
+    torch.save({'state_dict': self.model.state_dict()}, args.save_file)
+
 
 if __name__ == "__main__":
     args = parse_arg()
     print(args)
-    pred_obj = LotteryPredict(args)
-    pred_obj.train()
+    train_loader, test_loader = getData(args.corpusFile, args.sequence_length, args.batch_size)
+    for i, train_item in enumerate(train_loader):
+      print("Ethan##: ", i, ": ", train_item)
+
+    #load data
+    
+
+    #pred_obj = LotteryPredict(args)
+    #pred_obj.train()

@@ -9,34 +9,35 @@ import torch
 from torchvision import transforms
 from parser_my import args
 
-#
+
 def getData(corpusFile,sequence_length,batchSize):
     # 数据预处理 ，去除id、股票代码、前一天的收盘价、交易日期等对训练无用的无效数据
     stock_data = read_csv(corpusFile)
     stock_data.drop('id', axis=1, inplace=True)  # 删除第一列’id‘
     stock_data.drop('second', axis=1, inplace=True)  # 删除列’pre_close‘
+    stock_data.drop('first', axis=1, inplace=True)  # 删除列’pre_close‘
     stock_data.drop('time', axis=1, inplace=True)  # 删除列’trade_date‘
+    stock_data.drop('money', axis=1, inplace=True)  # 删除列’trade_date‘
     #print(stock_data)
     #lottery_data = [int(x) for x in stock_data["red_num"]]
 
-    money_max = stock_data['money'].max() #投注的最大值
-    money_min = stock_data['money'].min() #投注的最小值
-    money_diff = money_max - money_min
-    money = stock_data['money'].apply(lambda x: (x - money_min)/money_diff )  # min-max标准化
-    red_num = stock_data['boll_num'].apply(lambda x:  Series([float(x)/33 for x in x.split()[:-1]],dtype=float))#str
-    blue_num= stock_data['boll_num'].apply(lambda x:  Series([float(x)/16 for x in x.split()[-1:]],dtype=float))#str
-    #print(money)
-    #print(red_num)
-    #print(blue_num)
+    #money_max = stock_data['money'].max() #投注的最大值
+    #money_min = stock_data['money'].min() #投注的最小值
+    #money_diff = money_max - money_min
+    #money = stock_data['money'].apply(lambda x: (x - money_min)/money_diff )  # min-max标准化
+    red_num  = stock_data['boll_num'].apply(lambda x:  Series([float(x)/33 for x in x.split()[:-1]], dtype=float))#str
+    blue_num = stock_data['boll_num'].apply(lambda x:  Series([float(x)/16 for x in x.split()[-1:]], dtype=float))#str
     sequence = sequence_length
     # 构建batch
-    total_len = money.shape[0]
+    #total_len = money.shape[0]
     # print(total_len)
+    print("Ethan red : ", red_num)
+    print("Ethan blue: ", blue_num)
 
-    train_red, train_blue, train_money = red_num, blue_num , money
-    test_red, test_blue,test_money = red_num[-101:], blue_num[-101:], money[-101:]
-    train_dataset = Mydataset(train_red, train_blue,train_money)
-    test_dataset = Mydataset(test_red, test_blue, test_money)
+    train_red, train_blue = red_num[:-1], blue_num[:-1]
+    test_red, test_blue = red_num[-101:], blue_num[-101:]
+    train_dataset = Mydataset(train_red, train_blue)
+    test_dataset = Mydataset(test_red, test_blue)
     train_loader = DataLoader(train_dataset, batch_size=batchSize,
                               shuffle=True)
     test_loader = DataLoader(test_dataset, batch_size=batchSize, shuffle=True)
@@ -44,20 +45,18 @@ def getData(corpusFile,sequence_length,batchSize):
 
 
 class Mydataset(Dataset):
-    def __init__(self, red, blue, money, transform=None):
+    def __init__(self, red, blue, transform=None):
         self.red = red
         self.blue = blue
-        self.money = money
         self.tranform = transform
 
     def __getitem__(self, index):
         red = self.red.iloc[index]
         blue = self.blue.iloc[index]
-        money = self.money.iloc[index]
-        if self.tranform != None:
-            return self.tranform(red), blue, money
-        print(red, blue, money)
-        return torch.tensor([red, blue, money])
+        if self.tranform:
+            return self.tranform(red), blue
+        print(red, blue)
+        return torch.tensor([red, blue])
 
     def __len__(self):
         return len(self.red)
