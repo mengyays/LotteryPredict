@@ -2,6 +2,7 @@ from LSTMModel import lstm
 from dataset import getData
 from parser_my import args
 import torch
+import matplotlib as plt
 
 
 def eval():

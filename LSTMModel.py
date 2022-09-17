@@ -1,4 +1,5 @@
 import torch.nn as nn
+import torch
 
 
 class lstm(nn.Module):
@@ -21,9 +22,14 @@ class lstm(nn.Module):
         # out = self.linear(hidden.reshape(a * b, c))
         out = self.linear(hidden)
         return out
-    
+
+
 class LSTM(nn.Module):
     def __init__(self, input_size, hidden_size, num_layers, output_size, batch_size, dropout=0, batch_first=True, gpu_device=0):
+        # size input: input dimension:6
+        # hidden_size : hidden layer dimension
+        # num_layers: LSTM layer
+        # aoutput_size: output layer dimension
         super().__init__()
         self.input_size = input_size
         self.hidden_size = hidden_size
@@ -34,7 +40,7 @@ class LSTM(nn.Module):
         self.batch_first = batch_first
         self.dropout=dropout
         self.gpu = gpu_device
-        self.lstm = nn.LSTM(input_size=self.input_size,hidden_size=self.hidden_size,num_layers=self.num_layers, batch_first=self.batch_first, dropout=self.dropout)
+        self.lstm = nn.LSTM(input_size=self.input_size, hidden_size=self.hidden_size, num_layers=self.num_layers, batch_first=self.batch_first, dropout=self.dropout)
         self.linear = nn.Linear(self.hidden_size, self.output_size)
 
     def forward(self, input_seq):

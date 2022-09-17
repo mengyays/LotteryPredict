@@ -25,41 +25,61 @@ def getData(corpusFile,sequence_length,batchSize):
     #money_min = stock_data['money'].min() #投注的最小值
     #money_diff = money_max - money_min
     #money = stock_data['money'].apply(lambda x: (x - money_min)/money_diff )  # min-max标准化
-    red_num  = stock_data['boll_num'].apply(lambda x:  Series([float(x)/33 for x in x.split()[:-1]], dtype=float))#str
+    red_num = stock_data['boll_num'].apply(lambda x:  Series([float(x)/33 for x in x.split()[:-1]], dtype=float))#str
     blue_num = stock_data['boll_num'].apply(lambda x:  Series([float(x)/16 for x in x.split()[-1:]], dtype=float))#str
     sequence = sequence_length
-    # 构建batch
-    #total_len = money.shape[0]
-    # print(total_len)
-    print("Ethan red : ", red_num)
-    print("Ethan blue: ", blue_num)
+    red = []
+    red_y = []
+    blue = []
+    blue_y = []
+    for i in range(red_num.shape[0]-sequence):
+        red.append(np.array(red_num.iloc[i:(i+sequence)].values, dtype=np.float32))
+        red_y.append(np.array(red_num.iloc[i+sequence].values, dtype=np.float32))
+        blue.append(np.array(blue_num.iloc[i:(i + sequence)].values, dtype=np.float32))
+        blue_y.append(np.array(blue_num.iloc[i + sequence].values, dtype=np.float32))
 
-    train_red, train_blue = red_num[:-1], blue_num[:-1]
-    test_red, test_blue = red_num[-101:], blue_num[-101:]
-    train_dataset = Mydataset(train_red, train_blue)
-    test_dataset = Mydataset(test_red, test_blue)
-    train_loader = DataLoader(train_dataset, batch_size=batchSize,
-                              shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batchSize, shuffle=True)
-    return train_loader, test_loader
+    # 构建batch
+    total_len = len(red)
+    # print(total_len)
+    #print("Ethan red : ", red)
+    #print("Ethan blue: ", blue)
+
+    train_red, train_red_y = red[:int(0.99*total_len)], red_y[:int(0.99*total_len)]
+    test_red, test_red_y = red[(int(0.99*total_len)):], red_y[int(0.99*total_len):]
+    train_blue, train_blue_y = red[:int(0.99*total_len)], red_y[:int(0.99*total_len)]
+    test_blue, test_blue_y = blue[(int(0.99*total_len)):], blue_y[int(0.99*total_len):]
+    train_red_dataset = Mydataset(train_red, train_red_y)
+    test_red_dataset = Mydataset(test_red, test_red_y)
+    train_blue_dataset = Mydataset(train_blue, train_blue_y)
+    test_blue_dataset = Mydataset(test_blue, test_blue_y)
+    train_loader_red = DataLoader(train_red_dataset, batch_size=batchSize, shuffle=True)
+    test_loader_red = DataLoader(test_red_dataset, batch_size=batchSize, shuffle=True)
+    train_loader_blue = DataLoader(train_blue_dataset, batch_size=batchSize, shuffle=True)
+    test_loader_blue = DataLoader(test_blue_dataset, batch_size=batchSize, shuffle=True)
+    return train_loader_red, test_loader_red, train_loader_blue, test_loader_blue
 
 
 class Mydataset(Dataset):
-    def __init__(self, red, blue, transform=None):
-        self.red = red
-        self.blue = blue
+    def __init__(self, x, y, transform=None):
+        self.x = x
+        self.y = y
         self.tranform = transform
 
     def __getitem__(self, index):
-        red = self.red.iloc[index]
-        blue = self.blue.iloc[index]
+        if index > 0 :
+          x = self.x.iloc[index]
+          y = self.y.iloc[index]
+
         if self.tranform:
-            return self.tranform(red), blue
-        print(red, blue)
-        return torch.tensor([red, blue])
+            return self.tranform(x), y
+        #print(x, y)
+        return torch.tensor([x, y])
 
     def __len__(self):
-        return len(self.red)
+        if len(self.x) ==len(self.y):
+            return len(self.x)
+        else:
+            return -1
 
 
 def load_data(file_name):
