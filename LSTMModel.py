@@ -50,5 +50,5 @@ class LSTM(nn.Module):
         # output(batch_size, seq_len, num_directions * hidden_size)
         output, _ = self.lstm(input_seq, (h_0, c_0)) # output(5, 30, 64)
         pred = self.linear(output)  # (5, 30, 1)
-        pred = pred[:, -1, :]  # (5, 1)
+        #pred = pred[:, -1, :]  # (5, 1)
         return pred

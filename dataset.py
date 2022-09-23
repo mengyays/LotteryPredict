@@ -1,4 +1,4 @@
-import pandas
+import pandas as pd
 from pandas import read_csv
 from pandas import Series
 from pandas import DataFrame
@@ -37,17 +37,19 @@ def getData(corpusFile,sequence_length,batchSize):
         red_y.append(np.array(red_num.iloc[i+sequence].values, dtype=np.float32))
         blue.append(np.array(blue_num.iloc[i:(i + sequence)].values, dtype=np.float32))
         blue_y.append(np.array(blue_num.iloc[i + sequence].values, dtype=np.float32))
-
+    print("Ethan red",len(red))
+    print("Ethan red",len(red[0]))
+    print("Ethan red",len(red[0][0]))
     # 构建batch
     total_len = len(red)
     # print(total_len)
     #print("Ethan red : ", red)
     #print("Ethan blue: ", blue)
 
-    train_red, train_red_y = np.array(red[:int(0.99*total_len)]), np.array(red[:int(0.99*total_len)])
-    test_red, test_red_y = np.array(red[(int(0.99*total_len)):]), np.array(red[int(0.99*total_len):])
-    train_blue, train_blue_y = np.array(blue[:int(0.99*total_len)]), np.array(blue[:int(0.99*total_len)])
-    test_blue, test_blue_y = np.array(blue[(int(0.99*total_len)):]), np.array(blue[int(0.99*total_len):])
+    train_red, train_red_y = red[:int(0.99*total_len)], red_y[:int(0.99*total_len)]
+    test_red, test_red_y = red[(int(0.99*total_len)):], red_y[int(0.99*total_len):]
+    train_blue, train_blue_y = red[:int(0.99*total_len)], red_y[:int(0.99*total_len)]
+    test_blue, test_blue_y = blue[(int(0.99*total_len)):], blue_y[int(0.99*total_len):]
     train_red_dataset = Mydataset(train_red, train_red_y)
     test_red_dataset = Mydataset(test_red, test_red_y)
     train_blue_dataset = Mydataset(train_blue, train_blue_y)
@@ -66,16 +68,17 @@ class Mydataset(Dataset):
         self.tranform = transform
 
     def __getitem__(self, index):
-        print("index:",index)
-        if index >= 0 :
-          x = self.x[index]
-          y = self.y[index]
-          #print("x shape ",x.shape)
-          #print("y shape ",y.shape)
+        #print("Ethan ",index)
+        if index > -1 :
+          x = self.x[index][0]
+          #print("Ethan x: ",x)
+          y = self.y[index][:]
+          #print("Ethan y : ",y)
 
-          if self.tranform:
-              return self.tranform(x), y
-          return torch.tensor(x), torch.tensor(y)
+        if self.tranform:
+            return self.tranform(x), y
+        #print(x, y)
+        return x,y
 
     def __len__(self):
         if len(self.x) ==len(self.y):
